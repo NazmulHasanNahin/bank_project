@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from decimal import Decimal
-from django.core.mail import EmailMessage,EmailMultiAlternatives
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -23,15 +23,15 @@ from transactions.forms import (
 from transactions.models import Transaction
 
 
+def send_mail_to_user(user, amount, subject, template):
+    message = render_to_string(template, {
+        "user": user,
+        "amount": amount
+    })
+    send_mail = EmailMultiAlternatives(subject, message, to=[user.email])
+    send_mail.attach_alternative(message, "text/html")
+    send_mail.send()
 
-def send_mail_to_user(user,amount,subject,template):
-        message=render_to_string(template,{
-                "user": user,
-                "amount":amount
-            })
-        send_mail=EmailMultiAlternatives(subject,message,to=[user.email])
-        send_mail.attach_alternative(message,"text/html")
-        send_mail.send()
 
 class TransactionCreateMixin(LoginRequiredMixin, CreateView):
     template_name = 'transactions/transaction_form.html'
@@ -76,9 +76,10 @@ class DepositMoneyView(TransactionCreateMixin):
         messages.success(
             self.request,
             f'{"{:,.2f}".format(float(amount))
-               }$ was deposited to your account successfully'
-        )
-        send_mail_to_user(self.request.user,amount,"Deposit Message","transactions/deposite_email.html")
+               } was deposited to your account successfully'
+               )
+
+        send_mail_to_user(self.request.user, amount, "Deposit Message","transactions/deposit_email.html")
         return super().form_valid(form)
 
 
@@ -107,7 +108,8 @@ class WithdrawMoneyView(TransactionCreateMixin):
 
             messages.success(request, f'Successfully withdrawn {
                              "{:,.2f}".format(float(amount))}$ from your account')
-            send_mail_to_user(self.request.user,amount,"Withdrawal Message","transactions/withdrawal_email.html")
+            send_mail_to_user(self.request.user, amount,
+                              "Withdrawal Message", "transactions/withdrawal_email.html")
         else:
             messages.error(request, "Insufficient funds.")
 
@@ -133,7 +135,8 @@ class LoanRequestView(TransactionCreateMixin):
             f'Loan request for {"{:,.2f}".format(
                 float(amount))}$ submitted successfully'
         )
-        send_mail_to_user(self.request.user,amount,"Loan request Message","transactions/loan_rq_email.html")
+        send_mail_to_user(self.request.user, amount,
+                          "Loan request Message", "transactions/loan_rq_email.html")
         return super().form_valid(form)
 
 

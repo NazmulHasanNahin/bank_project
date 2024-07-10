@@ -30,3 +30,4 @@ tzdata
 virtualenv
 dj_database_url
 gunicorn
+python-decouple

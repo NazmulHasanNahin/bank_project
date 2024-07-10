@@ -6,10 +6,10 @@ import sys
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'central_bank.settings')
-    
-    # Check if the PORT environment variable is set and use it
-    port = os.environ.get('PORT')
-    
+
+    # Read the PORT environment variable
+    port = os.environ.get('PORT', '8000')  # Default to 8000 if PORT is not set
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -18,10 +18,13 @@ def main():
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
-    
-    if port:
+
+    # Add port handling logic
+    if len(sys.argv) == 1:
         sys.argv += ['runserver', '0.0.0.0:' + port]
-    
+    elif sys.argv[1] == 'runserver' and len(sys.argv) == 2:
+        sys.argv.append('0.0.0.0:' + port)
+
     execute_from_command_line(sys.argv)
 
 if __name__ == '__main__':

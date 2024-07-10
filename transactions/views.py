@@ -1,3 +1,4 @@
+# Import necessary modules
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
@@ -15,11 +16,7 @@ from transactions.constants import DEPOSIT, WITHDRAWAL, LOAN, LOAN_PAID
 from datetime import datetime
 from accounts.models import UserBankAccount, BankruptcyStatus
 from django.db.models import Sum
-from transactions.forms import (
-    DepositForm,
-    WithdrawForm,
-    LoanRequestForm,
-)
+from transactions.forms import DepositForm, WithdrawForm, LoanRequestForm
 from transactions.models import Transaction
 
 
@@ -51,7 +48,6 @@ class TransactionCreateMixin(LoginRequiredMixin, CreateView):
         context.update({
             'title': self.title
         })
-
         return context
 
 
@@ -67,15 +63,13 @@ class DepositMoneyView(TransactionCreateMixin):
         amount = form.cleaned_data.get('amount')
         account = self.request.user.account
         account.balance += amount
-        account.save(
-            update_fields=[
-                'balance'
-            ]
+        account.save(update_fields=['balance'])
+
+        messages.success(
+            self.request,
+            f'{"{:,.2f}".format(float(amount))} was deposited to your account successfully'
         )
-
-        messages.success(self.request,f'{"{:,.2f}".format(float(amount))} was deposited to your account successfully')
-
-        send_mail_to_user(self.request.user, amount, "Deposit Message","transactions/deposit_email.html")
+        send_mail_to_user(self.request.user, amount, "Deposit Message", "transactions/deposit_email.html")
         return super().form_valid(form)
 
 
@@ -94,19 +88,15 @@ class WithdrawMoneyView(TransactionCreateMixin):
 
         bankruptcy_status = BankruptcyStatus.objects.first()
         if bankruptcy_status and bankruptcy_status.is_bankrupt:
-            messages.error(
-                request, "The bank is bankrupt. Withdrawals are not allowed.")
+            messages.error(request, "The bank is bankrupt. Withdrawals are not allowed.")
             return redirect('withdraw_money')
 
         if from_account.balance >= amount:
             from_account.balance -= amount
             from_account.save(update_fields=['balance'])
 
-            messages.success(request, f'Successfully withdrawn {
-                             "{:,.2f}".format(float(amount))} from your account'
-                             )
-            send_mail_to_user(self.request.user, amount,
-                              "Withdrawal Message", "transactions/withdrawal_email.html")
+            messages.success(request, f'Successfully withdrawn {"{:,.2f}".format(float(amount))} from your account')
+            send_mail_to_user(self.request.user, amount, "Withdrawal Message", "transactions/withdrawal_email.html")
         else:
             messages.error(request, "Insufficient funds.")
 
@@ -126,14 +116,12 @@ class LoanRequestView(TransactionCreateMixin):
         current_loan_count = Transaction.objects.filter(
             account=self.request.user.account, transaction_type=3, loan_approve=True).count()
         if current_loan_count >= 3:
-            return HttpResponse("You have cross the loan limits")
+            return HttpResponse("You have crossed the loan limits")
         messages.success(
             self.request,
-            f'Loan request for {"{:,.2f}".format(
-                float(amount))}$ submitted successfully'
+            f'Loan request for {"{:,.2f}".format(float(amount))}$ submitted successfully'
         )
-        send_mail_to_user(self.request.user, amount,
-                          "Loan request Message", "transactions/loan_rq_email.html")
+        send_mail_to_user(self.request.user, amount, "Loan request Message", "transactions/loan_rq_email.html")
         return super().form_valid(form)
 
 
@@ -176,7 +164,6 @@ class TransactionReportView(LoginRequiredMixin, ListView):
 class PayLoanView(LoginRequiredMixin, View):
     def get(self, request, loan_id):
         loan = get_object_or_404(Transaction, id=loan_id)
-        print(loan)
         if loan.loan_approve:
             user_account = loan.account
             if loan.amount < user_account.balance:
@@ -188,10 +175,7 @@ class PayLoanView(LoginRequiredMixin, View):
                 loan.save()
                 return redirect('transactions:loan_list')
             else:
-                messages.error(
-                    self.request,
-                    f'Loan amount is greater than available balance'
-                )
+                messages.error(self.request, "Loan amount is greater than available balance")
 
         return redirect('loan_list')
 
@@ -203,9 +187,7 @@ class LoanListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user_account = self.request.user.account
-        queryset = Transaction.objects.filter(
-            account=user_account, transaction_type=3)
-        print(queryset)
+        queryset = Transaction.objects.filter(account=user_account, transaction_type=3)
         return queryset
 
 

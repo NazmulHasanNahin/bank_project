@@ -73,11 +73,7 @@ class DepositMoneyView(TransactionCreateMixin):
             ]
         )
 
-        messages.success(
-            self.request,
-            f'{"{:,.2f}".format(float(amount))
-               } was deposited to your account successfully'
-               )
+        messages.success(self.request,f'{"{:,.2f}".format(float(amount))} was deposited to your account successfully')
 
         send_mail_to_user(self.request.user, amount, "Deposit Message","transactions/deposit_email.html")
         return super().form_valid(form)

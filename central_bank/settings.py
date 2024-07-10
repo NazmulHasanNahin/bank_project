@@ -1,4 +1,5 @@
 import environ
+import dj_database_url
 env = environ.Env()
 environ.Env.read_env()
 from pathlib import Path
@@ -78,18 +79,28 @@ WSGI_APPLICATION = 'central_bank.wsgi.application'
 
 from decouple import config
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': config('POSTGRES_DB'),
+#         'USER': config('POSTGRES_USER'),
+#         'PASSWORD': config('POSTGRES_PASSWORD'),
+#         'HOST': config('POSTGRES_HOST'),
+#         'PORT': config('POSTGRES_PORT', default='5432'),
+#         'OPTIONS': {
+#             'sslmode': 'require',
+#         },
+#     },
+# }
+
+
+
+# Replace the SQLite DATABASES configuration with PostgreSQL:
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRES_DB'),
-        'USER': config('POSTGRES_USER'),
-        'PASSWORD': config('POSTGRES_PASSWORD'),
-        'HOST': config('POSTGRES_HOST'),
-        'PORT': config('POSTGRES_PORT', default='5432'),
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
-    },
+    'default': dj_database_url.config(
+        # Replace this value with your local database's connection string.
+        default='postgresql://central_bank_db_q7iz_user:LqtszCRhim03UefQHldUV2vRJ8TEWqZL@dpg-cq79ph2ju9rs73d89vm0-a.oregon-postgres.render.com/central_bank_db_q7iz',
+    )
 }
 
 

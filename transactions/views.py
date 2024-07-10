@@ -107,7 +107,8 @@ class WithdrawMoneyView(TransactionCreateMixin):
             from_account.save(update_fields=['balance'])
 
             messages.success(request, f'Successfully withdrawn {
-                             "{:,.2f}".format(float(amount))}$ from your account')
+                             "{:,.2f}".format(float(amount))} from your account'
+                             )
             send_mail_to_user(self.request.user, amount,
                               "Withdrawal Message", "transactions/withdrawal_email.html")
         else:

@@ -20,10 +20,12 @@ from transactions.forms import DepositForm, WithdrawForm, LoanRequestForm
 from transactions.models import Transaction
 
 
-def send_mail_to_user(user, amount, subject, template):
+def send_mail_to_user(user,amount ,subject, template,sender_name=None,receiver_name=None):
     message = render_to_string(template, {
         "user": user,
-        "amount": amount
+        "amount": amount,
+        "sender_name":sender_name,
+        "receiver_name":receiver_name,
     })
     send_mail = EmailMultiAlternatives(subject, message, to=[user.email])
     send_mail.attach_alternative(message, "text/html")
@@ -191,6 +193,7 @@ class LoanListView(LoginRequiredMixin, ListView):
         return queryset
 
 
+
 class TransferAmountView(View):
     template_name = 'transactions/transfer.html'
 
@@ -229,7 +232,10 @@ class TransferAmountView(View):
                 balance_after_transaction=to_account.balance,
                 transaction_type=2
             )
-
+            sender_name = f"{request.user.first_name} {request.user.last_name}"
+            receiver_name = f"{to_account.user.first_name} {to_account.user.last_name}"
+            send_mail_to_user(request.user, amount, "Money Transfer Message", "transactions/money_transfer_mail.html", sender_name, receiver_name)
+            send_mail_to_user(to_account.user, amount, "Money Transfer Received", "transactions/money_received_mail.html", sender_name, receiver_name)
             messages.success(request, "Transfer successful.")
         else:
             messages.error(request, "Insufficient funds.")
